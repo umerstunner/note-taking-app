@@ -7,6 +7,7 @@ function App() {
         return savedNotes ? JSON.parse(savedNotes) : [];
     });
     const [note, setNote] = useState('');
+    const [editingIndex, setEditingIndex] = useState(null);
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -15,10 +16,31 @@ function App() {
 
     const addNote = useCallback(() => {
         if (note.trim() === '') return;
-        setNotes((prevNotes) => [...prevNotes, note]);
+        if (editingIndex !== null) {
+            setNotes((prevNotes) =>
+                prevNotes.map((n, index) => (index === editingIndex ? note : n))
+            );
+            setEditingIndex(null);
+        } else {
+            setNotes((prevNotes) => [...prevNotes, note]);
+        }
         setNote('');
         inputRef.current.focus();
-    }, [note]);
+    }, [note, editingIndex]);
+
+    const deleteNote = useCallback((index) => {
+        setNotes((prevNotes) => prevNotes.filter((_, i) => i !== index));
+    }, []);
+
+    const editNote = useCallback((index) => {
+        setNote(notes[index]);
+        setEditingIndex(index);
+        inputRef.current.focus();
+    }, [notes]);
+
+    const clearAllNotes = useCallback(() => {
+        setNotes([]);
+    }, []);
 
     const totalNotes = useMemo(() => notes.length, [notes]);
 
@@ -33,12 +55,23 @@ function App() {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                 />
-                <button onClick={addNote}>Add Note</button>
+                <button onClick={addNote}>
+                    {editingIndex !== null ? 'Update Note' : 'Add Note'}
+                </button>
             </div>
             <p>Total Notes: {totalNotes}</p>
+            <button className="clear-all-btn" onClick={clearAllNotes}>
+                Clear All Notes
+            </button>
             <ul className="note-list">
                 {notes.map((n, index) => (
-                    <li key={index}>{n}</li>
+                    <li key={index}>
+                        <span>{n}</span>
+                        <div className="note-actions">
+                            <button onClick={() => editNote(index)}>Edit</button>
+                            <button onClick={() => deleteNote(index)}>Delete</button>
+                        </div>
+                    </li>
                 ))}
             </ul>
         </div>
