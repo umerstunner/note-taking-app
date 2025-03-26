@@ -2,51 +2,43 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import './App2.css';
 
 function App() {
-    const [notes, setNotes] = useState([]);
-    const [noteInput, setNoteInput] = useState('');
+    const [notes, setNotes] = useState(() => {
+        const savedNotes = localStorage.getItem('notes');
+        return savedNotes ? JSON.parse(savedNotes) : [];
+    });
+    const [note, setNote] = useState('');
     const inputRef = useRef(null);
-
-    useEffect(() => {
-        const savedNotes = JSON.parse(localStorage.getItem('notes')) || [];
-        setNotes(savedNotes);
-    }, []);
 
     useEffect(() => {
         localStorage.setItem('notes', JSON.stringify(notes));
     }, [notes]);
 
-    const handleInputChange = (event) => {
-        setNoteInput(event.target.value);
-    };
-
     const addNote = useCallback(() => {
-        if (noteInput.trim() !== '') {
-            setNotes((prevNotes) => [...prevNotes, noteInput.trim()]);
-            setNoteInput('');
-        }
-    }, [noteInput]);
-
-    useEffect(() => {
+        if (note.trim() === '') return;
+        setNotes((prevNotes) => [...prevNotes, note]);
+        setNote('');
         inputRef.current.focus();
-    }, [notes]);
+    }, [note]);
 
-    const noteCount = useMemo(() => notes.length, [notes]);
+    const totalNotes = useMemo(() => notes.length, [notes]);
 
     return (
-        <div>
+        <div className="note-app">
             <h1>Note-Taking App</h1>
-            <input
-                ref={inputRef}
-                type="text"
-                value={noteInput}
-                onChange={handleInputChange}
-                placeholder="Enter your note here..."
-            />
-            <button onClick={addNote}>Add Note</button>
-            <p>Total Notes: {noteCount}</p>
-            <ul>
-                {notes.map((note, index) => (
-                    <li key={index}>{note}</li>
+            <div className="note-input">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Enter your note here..."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                />
+                <button onClick={addNote}>Add Note</button>
+            </div>
+            <p>Total Notes: {totalNotes}</p>
+            <ul className="note-list">
+                {notes.map((n, index) => (
+                    <li key={index}>{n}</li>
                 ))}
             </ul>
         </div>
